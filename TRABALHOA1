@@ -1,62 +1,225 @@
-CADASTRO -------------------------////
+-------------------------------------------------------------------------------------------------------------------------------------
 
-<html>
+//INDEX
 
+<html lang= "pt-br">
 <head>
-<title>Sistema</title>
+   <meta charset="utf-8"/>
+   </title>Sistema de Login</title>
+   <link rel="stylesheet" href="CSS/estilo.css">
 </head>
-
 <body>
-<form name="login" method="post" action="cadastrando.php"> 
-Nome: <input type="text" name="nome" /><br /><br />
-Sobrenome: <input type="text" name="sobrenome" /><br /><br />
-Pais: <input type="text" name="pais" /><br /><br />
-Estado: <input type="text" name="estado" /><br /><br />
-Cidade: <input type="text" name="nome" /><br /><br />
-Email:<input type="text" name="email" /><br /><br />
-Senha:  <input type="password" name="senha" /><br /><br />
-<input type="submit" value="Cadastrar" />
-</form>
-</body>
+<div id="corpo-form">
+   <h1>Entrar</h1>
+   <form method="POST">
+      <input type="email" placeholder="Usuário" name="email">
+      <input type="password" placeholder="Senha" name="senha">
+      <input type="submit" value="ACESSAR">
+      <a href="cadastrar.php">Ainda não é inscrito?<strong> Cadastre-se</strong></a>
+   </form>  
+</div>  
+<?php
 
+
+
+
+?>
+
+
+
+
+
+</body>
 </html>
 
 
+-------------------------------------------------------------------------------------------------------------------------------------
 
+//CADASTRAR 
 
+<?php
+     require_once 'CLASSES/usua.php';
+     $u = new Usuario;
 
+?>
 
-CADASTRANDO ... -------------///
-
-<html>
-
+<html lang= "pt-br">
 <head>
-<title>Cadastrando...</title>
+   <meta charset="utf-8"/>
+   </title>Sistema de Login</title>
+   <link rel="stylesheet" href="CSS/estilo.css">
 </head>
-
 <body>
+<div id="corpo-form">
+   <h1>Entrar</h1>
+   <form method="POST">
+      <input type="text" name="nome" placeholder="Nome completo" maxlength="50">
+      <input type="text" name="telefone" placeholder="Telefone" maxlength="20">
+      <input type="password" name="senha" placeholder="Senha" maxlength="11">
+      <input type="text" name="endereco" placeholder="Endereço" maxlength="80">
+      <input type="text" name="email" placeholder="Email" maxlength="50">
+      <input type="submit" value="CADASTRAR">
 
+      <a href="cadastrar.php">Ainda não é inscrito?<strong> Cadastre-se</strong></a>
+   </form>  
+</div>  
 <?php
-$host = "localhost";
-$user = "root";
-$pass = "";
-$banco = "cadastro";
-$conexao = mysql_connect($host, $user, $pass) or die (mysql_error());
-mysql_select_db($banco) or die(mysql_error());
+//verificar se clicou no botao cadastrar
+if (isset($_POST['nome']))
+{
+    $nome = addslashes ($_POST['nome']);
+    $telefone = addslashes ($_POST['telefone']);
+    $senha = addslashes ($_POST['senha']);
+    $endereco = addslashes ($_POST['endereco']);
+    $email = addslashes ($_POST['email']);
+    //Verificar se tá em branco
+    if (!empty($nome) && !empty($telefone) && !empty($senha) && !empty($endereco) && !empty($email))
+    {
+        $u->conectar("projeto_login","localhost","root","");
+        if($u->msgErro == "")//se tá tudo ok
+        {
+             $u->cadastrar($nome, $telefone, $senha, $endereco, $email);
+            {
+                echo "cadastrado com sucesso!";
+
+            }
+
+        }
+        else
+        {
+            echo "Erro: ".$u->msgErro;
+        }
+        
+    
+    } else
+    {
+        echo"Preencha tudo!";
+    }
+
+
+}
+
+
+
 ?>
 
-
-<?php
-$nome=$_POST['nome'];
-$sobrenome=$_POST['sobrenome'];
-$pais=$_POST['pais'];
-$estado=$_POST['estado'];
-$cidade=$_POST['cidade'];
-$email=$_POST['email'];
-$senha=$_POST['senha'];
-$sql = mysql_query("INSERT INTO usuarios(nome, sobrenome, pais, estado, cidade, email, senha)
-VALUES('$nome', '$sobrenome', '$pais', '$estado', '$cidade', '$email', '$senha')");
-echo "<center><h1>BEM VINDO USUÁRIO!<h1></center>";
-?>
 
 </body>
+</html>
+
+-------------------------------------------------------------------------------------------------------------------------------------
+//ESTILO CSS
+*{
+   margin: 0px;
+   padding: 0px;
+
+}
+body{
+    background-image: url("IMAGENS/jk.jpg");
+
+
+}
+
+input{
+    display: block;
+    height: 55px;
+    width: 400px;
+    margin: 10px;
+    border-radius: 30px
+}
+
+div#corpo-form{
+    /*background-color: red;*/
+    width: 420px;
+    margin: 150px auto 0px auto;
+
+
+
+
+}
+
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+//Usuarios
+
+<?php
+Class Usuario
+{
+    private $pdo;
+    public $msgErro = "";
+
+    public function conectar($nome, $host, $usuario, $senha)
+    {
+        global $pdo;
+        try
+        {
+            $pdo =  new PDO("mysql:dbname=".$nome.";host=".$host, $usuario, $senha);
+
+        } catch (PDOException $e) {
+            $msgErro = $e->getMessage();
+        }
+       
+
+    }
+
+    public function cadastrar($nome, $telefone, $senha, $endereco, $email)
+    {
+        global $pdo;
+        //verificar se já existe o email cadastrado
+        $sql = $pdo->prepare("SELECT id_usuario FROM usua WHERE  email = :e");
+        $sql->bindValue(":e",$email);
+        $sql->execute();    
+        if($sql->rowCount() > 0)
+        {
+            return false; //Já cadastrada
+        }
+        else 
+        {
+            //Caso não, cadastrar
+            $sql =  $pdo->prepare("INSERT INTO usua(nome, telefone, senha, endereco, email) VALUES (:n, :t, :s, :m, e)");
+            $sql->bindValue(":n",$nome);
+            $sql->bindValue(":t",$telefone);
+            $sql->bindValue(":s",md5($senha));
+            $sql->bindValue(":m",$endereco);
+            $sql->bindValue(":e",$email);
+            $sql->execute();
+            return true; //ok
+
+        }
+
+    }
+
+    public function logar($email, $senha)
+
+    {
+        global $pdo;
+        //verificar se o email e senha tão cadastrados, se sim
+        $sql = $pdo->prepare("SELECT id_usuario FROM usua WHERE email = :e AND senha = :s");
+        $sql->blindValue(":e", $email);
+        $sql->blindValue(":s", md5($senha));
+        $sql->execute();
+        if($sql->rowCount()     > 0)
+        {
+            //entrar no sistema
+            $dado = $sql->fetch();
+            session_start ();
+            $_SESSION['id_usuario'] = $dado['id_usuario'];
+            return true; //logado
+        
+        }
+        else
+        {
+            return false; //não logado
+
+
+        }
+
+    }
+
+}
+
+
+
+
+?>
